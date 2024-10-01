@@ -11,12 +11,24 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["medusajs", "medusa", "monorepo", "monorepository", "launch", "build", "utilities"],
+  "keywords": [
+    "medusajs",
+    "medusa",
+    "monorepo",
+    "monorepository",
+    "launch",
+    "build",
+    "utilities"
+  ],
   "author": "Rasmus Puls",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
     "dotenv": "^10.0.0",
     "pg": "^8.7.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://https://github.com/rpuls/medusajs-launch-utils"
   }
 }
