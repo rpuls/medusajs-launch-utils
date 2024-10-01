@@ -1,0 +1,22 @@
+{
+  "name": "medusajs-launch-utils",
+  "version": "0.0.1",
+  "description": "Build and launch utilities for Medusajs monorepo projects",
+  "main": "index.js",
+  "bin": {
+    "init-backend": "./bin/initializeBackend.js",
+    "await-backend": "./bin/awaitBackendReady.js",
+    "launch-storefront": "./bin/launchStorefront.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["medusajs", "medusa", "monorepo", "monorepository", "launch", "build", "utilities"],
+  "author": "Rasmus Puls",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "dotenv": "^10.0.0",
+    "pg": "^8.7.1"
+  }
+}
