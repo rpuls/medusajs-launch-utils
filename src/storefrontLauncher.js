@@ -30,14 +30,14 @@ const fetchApiKey = async (url, retries = 5) => {
     try {
       const response = await axios.get(url);
       console.log(`Attempt ${attempt} - Response status: ${response.status}`);
-      
+
       const apiKey = response.data;
       console.log('API key response:', apiKey);
-      
+
       if (!apiKey || !apiKey.publishableApiKey) {
         throw new Error('Invalid API key format received');
       }
-      
+
       return apiKey.publishableApiKey;
     } catch (error) {
       console.error(`Error fetching API key (Attempt ${attempt}/${retries}): ${error.message}`);
@@ -53,8 +53,8 @@ const fetchApiKey = async (url, retries = 5) => {
 };
 
 const launchStorefront = async (command, backendUrl, port) => {
-  if (!command || !['start', 'build'].includes(command)) {
-    throw new Error('Please provide a valid command: "start" or "build".');
+  if (!command || !['start', 'build', 'dev'].includes(command)) {
+    throw new Error('Please provide a valid command: "start", "build", or "dev".');
   }
 
   let publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
@@ -72,9 +72,16 @@ const launchStorefront = async (command, backendUrl, port) => {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is already set.');
   }
 
-  const nextCommand = command === 'start' ? `next start -p ${port || '3000'}` : 'next build';
+  let nextCommand;
+  if (command === 'start') {
+    nextCommand = `next start -p ${port || '3000'}`;
+  } else if (command === 'build') {
+    nextCommand = 'next build';
+  } else { // command === 'dev'
+    nextCommand = `next dev -p ${port || '8000'}`;
+  }
   console.log(`Running command: ${nextCommand}`);
-  
+
   try {
     await runCommand(nextCommand, { NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: publishableKey });
     console.log(`Command "${nextCommand}" completed successfully.`);
