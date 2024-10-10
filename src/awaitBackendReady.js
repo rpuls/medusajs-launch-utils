@@ -18,18 +18,17 @@ const checkBackend = (url, timeout = 1200) => {
             console.log('Backend is ready!');
             resolve();
           } else {
-            console.log(`Waiting for a medusajs backend to be available on ${url}... Elapsed time: ${elapsedTime} seconds`);
-            setTimeout(check, 5000); // Wait 5 seconds before retrying
+            retryCheck(elapsedTime);
           }
         })
         .catch((error) => {
-          if (error.code === 'ECONNREFUSED') {
-            console.log(`Waiting for a medusajs backend to be available on ${url}... Elapsed time: ${elapsedTime} seconds`);
-            setTimeout(check, 5000); // Wait 5 seconds before retrying
-          } else {
-            reject(new Error(`An unexpected error occurred: ${error.message}`));
-          }
+          retryCheck(elapsedTime);
         });
+    };
+
+    const retryCheck = (elapsedTime) => {
+      console.log(`Waiting for a medusajs backend to be available on ${url}... Elapsed time: ${elapsedTime} seconds`);
+      setTimeout(check, 5000); // Wait 5 seconds before retrying
     };
 
     check();
