@@ -44,10 +44,10 @@ const runCommand = (command) => {
 const seedDatabase = async () => {
   try {
     console.log('Running migrations...');
-    await runCommand('npx medusa migrations run');
+    await runCommand('npx medusa db:migrate');
     
     console.log('Running link sync...');
-    await runCommand('npx medusa links sync');
+    await runCommand('npx medusa db:sync-links');
     
     console.log('Running seed script...');
     await runCommand('npm run seed');
