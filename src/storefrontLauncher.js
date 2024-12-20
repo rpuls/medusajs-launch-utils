@@ -23,33 +23,47 @@ const runCommand = (command, env) => {
 
 const delay = (ms) => setTimeout(ms);
 
-const fetchApiKey = async (url, retries = 5) => {
-  console.log(`Attempting to fetch API key from: ${url}`);
+const fetchKey = async (url, validator, retries = 5) => {
+  console.log(`Attempting to fetch key from: ${url}`);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await axios.get(url);
       console.log(`Attempt ${attempt} - Response status: ${response.status}`);
 
-      const apiKey = response.data;
-      console.log('API key response:', apiKey);
+      const data = response.data;
+      console.log('Response:', data);
 
-      if (!apiKey || !apiKey.publishableApiKey) {
-        throw new Error('Invalid API key format received');
+      const key = validator(data);
+      if (!key) {
+        throw new Error('Invalid key format received');
       }
 
-      return apiKey.publishableApiKey;
+      return key;
     } catch (error) {
-      console.error(`Error fetching API key (Attempt ${attempt}/${retries}): ${error.message}`);
+      console.error(`Error fetching key (Attempt ${attempt}/${retries}): ${error.message}`);
       if (attempt < retries) {
         console.log(`Retrying in 3 seconds...`);
         await delay(3000);
       } else {
-        console.error('All retry attempts exhausted. Unable to fetch API key.');
+        console.error('All retry attempts exhausted. Unable to fetch key.');
         return null;
       }
     }
   }
+};
+
+const validatePublishableKey = (data) => {
+  return data?.publishableApiKey;
+};
+
+const validateMeilisearchKey = (data) => {
+  const searchKey = data?.results?.find(key => 
+    Array.isArray(key.actions) && 
+    key.actions.length === 1 && 
+    key.actions[0] === 'search'
+  );
+  return searchKey?.key;
 };
 
 const launchStorefront = async (command, backendUrl, port) => {
@@ -58,18 +72,29 @@ const launchStorefront = async (command, backendUrl, port) => {
   }
 
   let publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+  let searchKey = process.env.NEXT_PUBLIC_SEARCH_API_KEY;
 
   console.log('Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:', publishableKey);
+  console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', searchKey);
 
   if (!publishableKey) {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined. Attempting to fetch...');
-    publishableKey = await fetchApiKey(`${backendUrl}/key-exchange`);
+    publishableKey = await fetchKey(`${backendUrl}/key-exchange`, validatePublishableKey);
     if (!publishableKey) {
       throw new Error('Failed to fetch API key after multiple attempts. Please ensure the backend is running and the key exchange endpoint is accessible.');
     }
     console.log('API key fetched successfully.');
   } else {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is already set.');
+  }
+
+  if (process.env.MEILISEARCH_API_KEY && process.env.NEXT_PUBLIC_SEARCH_ENDPOINT && !searchKey) {
+    console.log('Meilisearch configuration detected. Attempting to fetch search key...');
+    searchKey = await fetchKey(`${process.env.NEXT_PUBLIC_SEARCH_ENDPOINT}/keys`, validateMeilisearchKey);
+    if (!searchKey) {
+      throw new Error('Failed to fetch Meilisearch search key after multiple attempts.');
+    }
+    console.log('Meilisearch search key fetched successfully.');
   }
 
   let nextCommand;
@@ -83,7 +108,15 @@ const launchStorefront = async (command, backendUrl, port) => {
   console.log(`Running command: ${nextCommand}`);
 
   try {
-    await runCommand(nextCommand, { NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: publishableKey });
+    const env = {
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: publishableKey
+    };
+    
+    if (searchKey) {
+      env.NEXT_PUBLIC_SEARCH_API_KEY = searchKey;
+    }
+
+    await runCommand(nextCommand, env);
     console.log(`Command "${nextCommand}" completed successfully.`);
   } catch (error) {
     throw new Error(`Error running command: ${error.message}`);

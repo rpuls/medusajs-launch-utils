@@ -1,6 +1,6 @@
 {
   "name": "medusajs-launch-utils",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Build and launch utilities for Medusajs monorepo projects",
   "main": "index.js",
   "bin": {
@@ -29,6 +29,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://https://github.com/rpuls/medusajs-launch-utils"
+    "url": "https://github.com/rpuls/medusajs-launch-utils"
   }
 }
