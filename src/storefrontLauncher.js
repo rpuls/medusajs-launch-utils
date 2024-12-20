@@ -66,20 +66,20 @@ const validateMeilisearchKey = (data) => {
   return searchKey?.key;
 };
 
-const launchStorefront = async (command, backendUrl, port) => {
+const launchStorefront = async (command, config) => {
   if (!command || !['start', 'build', 'dev'].includes(command)) {
     throw new Error('Please provide a valid command: "start", "build", or "dev".');
   }
 
-  let publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
-  let searchKey = process.env.NEXT_PUBLIC_SEARCH_API_KEY;
+  let publishableKey = config.publishableKey;
+  let searchKey = config.searchConfig?.searchKey;
 
   console.log('Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:', publishableKey);
   console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', searchKey);
 
   if (!publishableKey) {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined. Attempting to fetch...');
-    publishableKey = await fetchKey(`${backendUrl}/key-exchange`, validatePublishableKey);
+    publishableKey = await fetchKey(`${config.backendUrl}/key-exchange`, validatePublishableKey);
     if (!publishableKey) {
       throw new Error('Failed to fetch API key after multiple attempts. Please ensure the backend is running and the key exchange endpoint is accessible.');
     }
@@ -88,9 +88,10 @@ const launchStorefront = async (command, backendUrl, port) => {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is already set.');
   }
 
-  if (process.env.MEILISEARCH_API_KEY && process.env.NEXT_PUBLIC_SEARCH_ENDPOINT && !searchKey) {
+  const { apiKey, endpoint } = config.searchConfig || {};
+  if (apiKey && endpoint && !searchKey) {
     console.log('Meilisearch configuration detected. Attempting to fetch search key...');
-    searchKey = await fetchKey(`${process.env.NEXT_PUBLIC_SEARCH_ENDPOINT}/keys`, validateMeilisearchKey);
+    searchKey = await fetchKey(`${endpoint}/keys`, validateMeilisearchKey);
     if (!searchKey) {
       throw new Error('Failed to fetch Meilisearch search key after multiple attempts.');
     }
@@ -99,21 +100,23 @@ const launchStorefront = async (command, backendUrl, port) => {
 
   let nextCommand;
   if (command === 'start') {
-    nextCommand = `next start -p ${port || '3000'}`;
+    nextCommand = `next start -p ${config.port || '3000'}`;
   } else if (command === 'build') {
     nextCommand = 'next build';
   } else { // command === 'dev'
-    nextCommand = `next dev -p ${port || '8000'}`;
+    nextCommand = `next dev -p ${config.port || '8000'}`;
   }
   console.log(`Running command: ${nextCommand}`);
 
   try {
     const env = {
-      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: publishableKey
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: publishableKey,
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: config.backendUrl
     };
     
     if (searchKey) {
       env.NEXT_PUBLIC_SEARCH_API_KEY = searchKey;
+      env.NEXT_PUBLIC_SEARCH_ENDPOINT = endpoint;
     }
 
     await runCommand(nextCommand, env);
