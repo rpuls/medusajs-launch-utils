@@ -23,47 +23,60 @@ const runCommand = (command, env) => {
 
 const delay = (ms) => setTimeout(ms);
 
-const fetchKey = async (url, validator, retries = 5) => {
-  console.log(`Attempting to fetch key from: ${url}`);
-
+const withRetry = async (operation, retries = 5) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await axios.get(url);
-      console.log(`Attempt ${attempt} - Response status: ${response.status}`);
-
-      const data = response.data;
-      console.log('Response:', data);
-
-      const key = validator(data);
-      if (!key) {
-        throw new Error('Invalid key format received');
-      }
-
-      return key;
+      return await operation();
     } catch (error) {
-      console.error(`Error fetching key (Attempt ${attempt}/${retries}): ${error.message}`);
+      console.error(`Error (Attempt ${attempt}/${retries}): ${error.message}`);
       if (attempt < retries) {
         console.log(`Retrying in 3 seconds...`);
         await delay(3000);
       } else {
-        console.error('All retry attempts exhausted. Unable to fetch key.');
+        console.error('All retry attempts exhausted.');
         return null;
       }
     }
   }
 };
 
-const validatePublishableKey = (data) => {
-  return data?.publishableApiKey;
+const fetchMedusaPublishableApiKey = async (backendUrl) => {
+  console.log('Attempting to fetch Medusa publishable key...');
+  const operation = async () => {
+    const response = await axios.get(`${backendUrl}/key-exchange`);
+    console.log('Medusa key response:', response.data);
+
+    const key = response.data?.publishableApiKey;
+    if (!key) {
+      throw new Error('Invalid Medusa key format received');
+    }
+    return key;
+  };
+
+  return await withRetry(operation);
 };
 
-const validateMeilisearchKey = (data) => {
-  const searchKey = data?.results?.find(key => 
-    Array.isArray(key.actions) && 
-    key.actions.length === 1 && 
-    key.actions[0] === 'search'
-  );
-  return searchKey?.key;
+const fetchMeilisearchKey = async (endpoint, masterKey) => {
+  console.log('Attempting to fetch Meilisearch search key...');
+  const operation = async () => {
+    const response = await axios.get(`${endpoint}/keys`, {
+      headers: { Authorization: `Bearer ${masterKey}` }
+    });
+    console.log('Meilisearch keys response:', response.data);
+
+    const searchKey = response.data?.results?.find(key => 
+      Array.isArray(key.actions) && 
+      key.actions.length === 1 && 
+      key.actions[0] === 'search'
+    );
+
+    if (!searchKey?.key) {
+      throw new Error('No valid search key found in Meilisearch response');
+    }
+    return searchKey.key;
+  };
+
+  return await withRetry(operation);
 };
 
 const launchStorefront = async (command, config) => {
@@ -71,29 +84,31 @@ const launchStorefront = async (command, config) => {
     throw new Error('Please provide a valid command: "start", "build", or "dev".');
   }
 
+  // Handle Medusa publishable key
   let publishableKey = config.publishableKey;
-  let searchKey = config.searchConfig?.searchKey;
-
   console.log('Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:', publishableKey);
-  console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', searchKey);
 
   if (!publishableKey) {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined. Attempting to fetch...');
-    publishableKey = await fetchKey(`${config.backendUrl}/key-exchange`, validatePublishableKey);
+    publishableKey = await fetchMedusaPublishableApiKey(config.backendUrl);
     if (!publishableKey) {
-      throw new Error('Failed to fetch API key after multiple attempts. Please ensure the backend is running and the key exchange endpoint is accessible.');
+      throw new Error('Failed to fetch Medusa publishable key. Please ensure the backend is running and accessible.');
     }
-    console.log('API key fetched successfully.');
+    console.log('Medusa publishable key fetched successfully.');
   } else {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is already set.');
   }
 
-  const { apiKey, endpoint } = config.searchConfig || {};
-  if (apiKey && endpoint && !searchKey) {
+  // Handle Meilisearch search key
+  let searchKey = config.searchConfig?.searchKey;
+  const { apiKey: masterKey, endpoint } = config.searchConfig || {};
+  console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', searchKey);
+
+  if (masterKey && endpoint && !searchKey) {
     console.log('Meilisearch configuration detected. Attempting to fetch search key...');
-    searchKey = await fetchKey(`${endpoint}/keys`, validateMeilisearchKey);
+    searchKey = await fetchMeilisearchKey(endpoint, masterKey);
     if (!searchKey) {
-      throw new Error('Failed to fetch Meilisearch search key after multiple attempts.');
+      throw new Error('Failed to fetch Meilisearch search key. Please check your configuration and master key.');
     }
     console.log('Meilisearch search key fetched successfully.');
   }
