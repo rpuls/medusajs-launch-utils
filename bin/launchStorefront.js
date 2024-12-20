@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
+const path = require('path');
+const dotenv = require('dotenv');
 const { launchStorefront } = require('../src/storefrontLauncher');
+
+// Load environment variables from .env.local if it exists
+const envPath = path.resolve(process.cwd(), '.env.local');
+dotenv.config({ path: envPath });
 
 const command = process.argv[2];
 
