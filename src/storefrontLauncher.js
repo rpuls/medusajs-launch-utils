@@ -108,9 +108,10 @@ const launchStorefront = async (command, config) => {
     console.log('Meilisearch configuration detected. Attempting to fetch search key...');
     searchKey = await fetchMeilisearchKey(endpoint, masterKey);
     if (!searchKey) {
-      throw new Error('Failed to fetch Meilisearch search key. Please check your configuration and master key.');
+      console.warn('Failed to fetch Meilisearch search key. Search functionality may be limited.');
+    } else {
+      console.log('Meilisearch search key fetched successfully.');
     }
-    console.log('Meilisearch search key fetched successfully.');
   }
 
   let nextCommand;

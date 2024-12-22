@@ -1,6 +1,6 @@
 {
   "name": "medusajs-launch-utils",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Build and launch utilities for Medusajs monorepo projects",
   "main": "index.js",
   "bin": {
