@@ -1,6 +1,6 @@
 {
   "name": "medusajs-launch-utils",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Build and launch utilities for Medusajs monorepo projects",
   "main": "index.js",
   "bin": {
@@ -20,7 +20,11 @@
     "build",
     "utilities"
   ],
-  "author": "Rasmus Puls",
+  "author": {
+    "name": "Rasmus Puls",
+    "url": "https://funkyton.com/"
+  },
+  "homepage": "https://funkyton.com/medusajs-2-0-is-finally-here/",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",

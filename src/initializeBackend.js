@@ -85,8 +85,14 @@ const reportDeploy = async () => {
   }
   const projectId = process.env.RAILWAY_PROJECT_ID;
   const publicUrl = process.env.PUBLIC_URL;
+  const storefrontPublishUrl = process.env.STOREFRONT_PUBLISH_URL;
   const templateId = 'medusa-2.0';
-  const payload = { projectId, templateId, publicUrl };
+  const payload = { 
+    projectId, 
+    templateId, 
+    publicUrl,
+    storefrontPublishUrl 
+  };
   try {
       const response = await axios.post(`${url}/api/projectDeployed`, payload);
   } catch (error) {
