@@ -52,4 +52,3 @@ For more detailed usage instructions, please refer to:
 
 ---
 Developed by [https://funkyton.com/](https://funkyton.com/) | Making open-source effortless for everyone
-Developed by [https://funkyton.com/](https://funkyton.com/) | Making open-source effortless for everyone

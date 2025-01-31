@@ -4,9 +4,9 @@
   "description": "Build and launch utilities for Medusajs monorepo projects",
   "main": "index.js",
   "bin": {
-    "init-backend": "./bin/initializeBackend.js",
-    "await-backend": "./bin/awaitBackendReady.js",
-    "launch-storefront": "./bin/launchStorefront.js"
+    "init-backend": "bin/initializeBackend.js",
+    "await-backend": "bin/awaitBackendReady.js",
+    "launch-storefront": "bin/launchStorefront.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -33,6 +33,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rpuls/medusajs-launch-utils"
+    "url": "git+https://github.com/rpuls/medusajs-launch-utils.git"
   }
 }
