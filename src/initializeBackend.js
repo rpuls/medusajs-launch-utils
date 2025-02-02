@@ -1,8 +1,30 @@
-// /script/seedOnce.js
 require('dotenv').config();
 const axios = require('axios');
 const { exec } = require('child_process');
 const { Client } = require('pg');
+const { fetchMeilisearchKey, appendToEnvFile } = require('./utils');
+
+const prepareEnvironment = async () => {
+  // Handle Meilisearch admin key
+  if (!process.env.MEILISEARCH_ADMIN_KEY && 
+      process.env.MEILISEARCH_MASTER_KEY && 
+      process.env.MEILISEARCH_HOST) {
+    const adminKey = await fetchMeilisearchKey(
+      process.env.MEILISEARCH_HOST,
+      process.env.MEILISEARCH_MASTER_KEY,
+      'admin'
+    );
+    
+    if (adminKey) {
+      await appendToEnvFile('MEILISEARCH_ADMIN_KEY', adminKey);
+      console.log('Successfully set MEILISEARCH_ADMIN_KEY');
+    } else {
+      throw new Error('Failed to fetch Meilisearch admin key');
+    }
+  }
+
+  // Future environment preparation can be added here
+};
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL
@@ -102,5 +124,6 @@ const reportDeploy = async () => {
 
 module.exports = {
   seedOnce,
-  reportDeploy
+  reportDeploy,
+  prepareEnvironment
 };

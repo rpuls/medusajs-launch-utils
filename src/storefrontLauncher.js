@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { spawn } = require('child_process');
-const { setTimeout } = require('timers/promises');
+const { withRetry, fetchMeilisearchKey } = require('./utils');
 
 const runCommand = (command, env) => {
   const [cmd, ...args] = command.split(' ');
@@ -21,25 +21,6 @@ const runCommand = (command, env) => {
   });
 };
 
-const delay = (ms) => setTimeout(ms);
-
-const withRetry = async (operation, retries = 5) => {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      console.error(`Error (Attempt ${attempt}/${retries}): ${error.message}`);
-      if (attempt < retries) {
-        console.log(`Retrying in 3 seconds...`);
-        await delay(3000);
-      } else {
-        console.error('All retry attempts exhausted.');
-        return null;
-      }
-    }
-  }
-};
-
 const fetchMedusaPublishableApiKey = async (backendUrl) => {
   console.log('Attempting to fetch Medusa publishable key...');
   const operation = async () => {
@@ -56,28 +37,6 @@ const fetchMedusaPublishableApiKey = async (backendUrl) => {
   return await withRetry(operation);
 };
 
-const fetchMeilisearchKey = async (endpoint, masterKey) => {
-  console.log('Attempting to fetch Meilisearch search key...');
-  const operation = async () => {
-    const response = await axios.get(`${endpoint}/keys`, {
-      headers: { Authorization: `Bearer ${masterKey}` }
-    });
-    console.log('Meilisearch keys response:', response.data);
-
-    const searchKey = response.data?.results?.find(key => 
-      Array.isArray(key.actions) && 
-      key.actions.length === 1 && 
-      key.actions[0] === 'search'
-    );
-
-    if (!searchKey?.key) {
-      throw new Error('No valid search key found in Meilisearch response');
-    }
-    return searchKey.key;
-  };
-
-  return await withRetry(operation);
-};
 
 const launchStorefront = async (command, config) => {
   if (!command || !['start', 'build', 'dev'].includes(command)) {
@@ -106,7 +65,7 @@ const launchStorefront = async (command, config) => {
 
   if (masterKey && endpoint && !searchKey) {
     console.log('Meilisearch configuration detected. Attempting to fetch search key...');
-    searchKey = await fetchMeilisearchKey(endpoint, masterKey);
+    searchKey = await fetchMeilisearchKey(endpoint, masterKey, 'search');
     if (!searchKey) {
       console.warn('Failed to fetch Meilisearch search key. Search functionality may be limited.');
     } else {

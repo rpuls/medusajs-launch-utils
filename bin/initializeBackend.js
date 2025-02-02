@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const { seedOnce, reportDeploy } = require('../src/initializeBackend');
+const { prepareEnvironment, seedOnce, reportDeploy,  } = require('../src/initializeBackend');
 
 async function initialize() {
   try {
+    await prepareEnvironment();
     await seedOnce();
     await reportDeploy();
     console.log('Backend initialized successfully');
