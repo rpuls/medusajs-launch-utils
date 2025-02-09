@@ -5,37 +5,65 @@ const axios = require('axios');
 
 const delay = (ms) => setTimeout(ms);
 
+const getEnvPaths = () => {
+  const currentDir = process.cwd();
+  const isBuiltEnv = currentDir.includes('.medusa/server');
+  
+  if (isBuiltEnv) {
+    // We're in the built environment
+    return [path.resolve(currentDir, '.env')];
+  } else {
+    // We're in the source environment, update both source and built .env
+    return [
+      path.resolve(currentDir, '.env'),
+      path.resolve(currentDir, '.medusa/server/.env')
+    ];
+  }
+};
+
 const appendToEnvFile = async (key, value) => {
-  try {
-    const envPath = path.resolve(process.cwd(), '.env');
-    let envContent = '';
-    
+  const envPaths = getEnvPaths();
+  
+  for (const envPath of envPaths) {
     try {
-      envContent = await fs.readFile(envPath, 'utf-8');
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        // File doesn't exist, create it
-        await fs.writeFile(envPath, '', 'utf-8');
-        console.log('Created new .env file');
-      } else {
+      let envContent = '';
+      
+      try {
+        // Ensure directory exists
+        await fs.mkdir(path.dirname(envPath), { recursive: true });
+        
+        try {
+          envContent = await fs.readFile(envPath, 'utf-8');
+        } catch (error) {
+          if (error.code === 'ENOENT') {
+            // File doesn't exist, create it
+            await fs.writeFile(envPath, '', 'utf-8');
+            console.log(`Created new .env file at ${envPath}`);
+          } else {
+            throw error;
+          }
+        }
+        
+        // Check if key already exists in .env
+        const keyRegex = new RegExp(`^${key}=.*$`, 'm');
+        if (keyRegex.test(envContent)) {
+          // Replace existing value
+          const updatedContent = envContent.replace(keyRegex, `${key}=${value}`);
+          await fs.writeFile(envPath, updatedContent, 'utf-8');
+        } else {
+          // Append new key-value pair
+          const newLine = envContent.length > 0 && !envContent.endsWith('\n') ? '\n' : '';
+          await fs.appendFile(envPath, `${newLine}${key}=${value}\n`);
+        }
+        console.log(`Successfully updated ${key} in ${envPath}`);
+      } catch (error) {
+        console.error(`Failed to update .env file at ${envPath}:`, error);
         throw error;
       }
+    } catch (error) {
+      console.error(`Error processing ${envPath}:`, error);
+      // Continue to next file even if this one fails
     }
-    
-    // Check if key already exists in .env
-    const keyRegex = new RegExp(`^${key}=.*$`, 'm');
-    if (keyRegex.test(envContent)) {
-      // Replace existing value
-      const updatedContent = envContent.replace(keyRegex, `${key}=${value}`);
-      await fs.writeFile(envPath, updatedContent, 'utf-8');
-    } else {
-      // Append new key-value pair
-      await fs.appendFile(envPath, `\n${key}=${value}`);
-    }
-    console.log(`Successfully updated ${key} in .env file`);
-  } catch (error) {
-    console.error(`Failed to update .env file:`, error);
-    throw error;
   }
 };
 
