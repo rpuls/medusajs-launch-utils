@@ -91,6 +91,12 @@ const seedDatabase = async () => {
 };
 
 const seedOnce = async () => {
+  // Skip seeding if running in worker mode
+  if (process.env.MEDUSA_WORKER_MODE === 'worker') {
+    console.log('Running in worker mode, skipping database seeding.');
+    return;
+  }
+
   const isSeeded = await checkIfSeeded();
   if (!isSeeded) {
     console.log('Database is not seeded. Seeding now...');
