@@ -74,8 +74,8 @@ const withRetry = async (operation, retries = 5) => {
     } catch (error) {
       console.error(`Error (Attempt ${attempt}/${retries}): ${error.message}`);
       if (attempt < retries) {
-        console.log(`Retrying in 3 seconds...`);
-        await delay(3000);
+        console.log(`Retrying in 10 seconds...`);
+        await delay(10000);
       } else {
         console.error('All retry attempts exhausted.');
         return null;

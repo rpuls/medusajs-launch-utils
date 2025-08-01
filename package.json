@@ -1,6 +1,6 @@
 {
   "name": "medusajs-launch-utils",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Build and launch utilities for Medusajs monorepo projects",
   "main": "index.js",
   "bin": {
@@ -27,7 +27,7 @@
   "homepage": "https://funkyton.com/medusajs-2-0-is-finally-here/",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.11.0",
     "dotenv": "^10.0.0",
     "pg": "^8.7.1"
   },

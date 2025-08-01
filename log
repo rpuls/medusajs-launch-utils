@@ -1,0 +1,46 @@
+Waiting for a medusajs backend to be available on https://backend-production-a506.up.railway.app/key-exchange... Elapsed time: 271 seconds
+
+Waiting for a medusajs backend to be available on https://backend-production-a506.up.railway.app/key-exchange... Elapsed time: 276 seconds
+
+Waiting for a medusajs backend to be available on https://backend-production-a506.up.railway.app/key-exchange... Elapsed time: 281 seconds
+
+Waiting for a medusajs backend to be available on https://backend-production-a506.up.railway.app/key-exchange... Elapsed time: 286 seconds
+
+Backend is ready!
+Backend is ready
+
+npm warn config production Use `--omit=dev` instead.
+
+> medusa-next@1.0.3 launcher
+> launch-storefront build
+
+Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: undefined
+
+NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined. Attempting to fetch...
+
+Attempting to fetch Medusa publishable key...
+
+Error (Attempt 1/5): Request failed with status code 404
+
+Retrying in 3 seconds...
+
+Error (Attempt 2/5): Request failed with status code 404
+
+Retrying in 3 seconds...
+
+Error (Attempt 3/5): Request failed with status code 404
+
+Retrying in 3 seconds...
+
+Error (Attempt 4/5): Request failed with status code 404
+
+Retrying in 3 seconds...
+
+Error (Attempt 5/5): Request failed with status code 404
+All retry attempts exhausted.
+
+Error launching storefront: Error: Failed to fetch Medusa publishable key. Please ensure the backend is running and accessible.
+    at launchStorefront (/app/node_modules/.pnpm/medusajs-launch-utils@0.0.16/node_modules/medusajs-launch-utils/src/storefrontLauncher.js:54:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+ ELIFECYCLE  Command failed with exit code 1.
