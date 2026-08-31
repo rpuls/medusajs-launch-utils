@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { spawn } = require('child_process');
-const { withRetry, fetchMeilisearchKey } = require('./utils');
+const { withRetry, fetchMeilisearchKey, redact, maskKey } = require('./utils');
 
 const runCommand = (command, env) => {
   const [cmd, ...args] = command.split(' ');
@@ -25,8 +25,8 @@ const fetchMedusaPublishableApiKey = async (backendUrl) => {
   console.log('Attempting to fetch Medusa publishable key...');
   const operation = async () => {
     const response = await axios.get(`${backendUrl}/key-exchange`);
-    console.log('Medusa key response:', response.data);
-
+    // Do not log response.data: the body is a credential and this output goes
+    // straight into the deploy log.
     const key = response.data?.publishableApiKey;
     if (!key) {
       throw new Error('Invalid Medusa key format received');
@@ -45,7 +45,7 @@ const launchStorefront = async (command, config) => {
 
   // Handle Medusa publishable key
   let publishableKey = config.publishableKey;
-  console.log('Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:', publishableKey);
+  console.log('Initial NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:', maskKey(publishableKey));
 
   if (!publishableKey) {
     console.log('NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined. Attempting to fetch...');
@@ -61,7 +61,7 @@ const launchStorefront = async (command, config) => {
   // Handle Meilisearch search key
   let searchKey = config.searchConfig?.searchKey;
   const { apiKey: masterKey, endpoint } = config.searchConfig || {};
-  console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', searchKey);
+  console.log('Initial NEXT_PUBLIC_SEARCH_API_KEY:', maskKey(searchKey));
 
   if (masterKey && endpoint && !searchKey) {
     console.log('Meilisearch configuration detected. Attempting to fetch search key...');
@@ -97,7 +97,7 @@ const launchStorefront = async (command, config) => {
     await runCommand(nextCommand, env);
     console.log(`Command "${nextCommand}" completed successfully.`);
   } catch (error) {
-    throw new Error(`Error running command: ${error.message}`);
+    throw new Error(`Error running command: ${redact(error.message)}`);
   }
 };
 

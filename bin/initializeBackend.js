@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-const { prepareEnvironment, seedOnce, reportDeploy,  } = require('../src/initializeBackend');
+const { prepareEnvironment, seedOnce, reportDeploy } = require('../src/initializeBackend');
+const { redact } = require('../src/utils');
 
 async function initialize() {
   try {
@@ -9,7 +10,7 @@ async function initialize() {
     await reportDeploy();
     console.log('Backend initialized successfully');
   } catch (error) {
-    console.error('Error initializing backend:', error);
+    console.error('Error initializing backend:', redact(error.message));
     process.exit(1);
   }
 }

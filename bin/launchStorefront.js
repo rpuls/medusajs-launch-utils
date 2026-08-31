@@ -3,11 +3,12 @@
 const path = require('path');
 const dotenv = require('dotenv');
 const { launchStorefront } = require('../src/storefrontLauncher');
+const { redact } = require('../src/utils');
 
 // Load environment variables from .env.local if it exists
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), quiet: true });
 // Load environment variables from .env if it exists
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const command = process.argv[2];
 
@@ -25,6 +26,6 @@ const config = {
 launchStorefront(command, config)
   .then(() => console.log('Storefront launched successfully'))
   .catch((error) => {
-    console.error('Error launching storefront:', error);
+    console.error('Error launching storefront:', redact(error.message));
     process.exit(1);
   });

@@ -25,6 +25,23 @@ Launch utilities for Medusajs monorepo projects. These utilities streamline the 
   - Environment variable handling
   - Retry mechanism for API operations
 
+## Used by
+
+This library is the piece that makes one-click e-commerce deploys work. It handles
+the boot sequence that is otherwise manual: waiting for the backend, running
+migrations, seeding once and never again, creating the first admin user, and
+exchanging API keys between services so the storefront comes up already connected.
+
+It powers these Railway templates:
+
+- **[Medusa 2.0 + Next.js Storefront](https://railway.com/deploy/medusajs-2-0-storefront?referralCode=-Yg50p)** - the full stack: Medusa backend, admin, Next.js storefront, Postgres, Redis, MeiliSearch and S3-compatible storage. [Source](https://github.com/rpuls/medusajs-2.0-for-railway-boilerplate)
+- **[Medusa 2.0 B2B](https://railway.com/deploy/medusajs-20-storefront-b2b?referralCode=-Yg50p)** - company accounts, spending limits, quotes and order approvals. [Source](https://github.com/rpuls/medusa-b2b-for-railway)
+- **[MercurJS Marketplace](https://railway.com/deploy/mercurjs?referralCode=-Yg50p)** - many sellers on one storefront, each with a vendor dashboard. [Source](https://github.com/rpuls/mercurjs-for-railway-boilerplate)
+
+All three are independent community projects by [FUNKYTON](https://funkyton.com/),
+not affiliated with MedusaJS, Inc. Guides and video walkthroughs:
+[funkyton.com](https://funkyton.com/medusajs-2-0-is-finally-here/)
+
 ## Installation
 
 ```bash
@@ -76,6 +93,24 @@ During initialization, if MEILISEARCH_ADMIN_KEY is not provided:
 1. The master key will be used to fetch the admin key from Meilisearch
 2. The admin key will be saved to your .env file
 3. The environment will be prepared before database operations begin
+
+## Logging and secrets
+
+These utilities run during a Railway deploy, so everything they print lands in a
+deploy log that anyone with project access can read. The package therefore never
+logs credential values:
+
+- API responses that carry keys (Meilisearch `/keys`, Medusa `/key-exchange`) are
+  summarised, not dumped.
+- Keys that are printed for diagnostics are masked, e.g. `pk_0…JK (17 chars)`.
+- Child process output and error messages pass through a redactor that replaces
+  any value found in `MEILISEARCH_MASTER_KEY`, `MEILISEARCH_ADMIN_KEY`,
+  `MEILISEARCH_API_KEY`, `MEDUSA_ADMIN_PASSWORD`, `DATABASE_URL`, `JWT_SECRET`,
+  `COOKIE_SECRET`, `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
+  `SENDGRID_API_KEY` or `S3_SECRET_ACCESS_KEY` with `[REDACTED]`.
+- The admin user is created with the password passed as its own argv entry
+  rather than inside a shell string, so a failure cannot put it into an error
+  message.
 
 ## Shared Utilities
 
