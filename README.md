@@ -9,7 +9,8 @@ Launch utilities for Medusajs monorepo projects. These utilities streamline the 
     - Automatic Meilisearch admin key fetching using master key
     - Environment variable management
     - Persists fetched keys to .env file
-  - Running database migrations 
+  - Database migrations on every boot, so pulling a Medusa upgrade and
+    redeploying is enough (see [Migrations](#migrations))
   - One-time database seeding
   - One-time admin user creation 
 
@@ -69,12 +70,15 @@ In your backend/package.json scripts:
 ```json
 {
   "scripts": {
-    "build": "init-backend && medusa build",
+    "build": "medusa build",
     "dev": "init-backend && medusa develop",
-    "start": "init-backend && medusa start",
+    "start": "init-backend && cd .medusa/server && medusa start",
   }
 }
 ```
+
+Keep `init-backend` out of `build`: it migrates the database, which belongs to
+the deploy that runs the new code, not to a build that may never ship.
 
 ### Meilisearch Configuration
 
@@ -93,6 +97,23 @@ During initialization, if MEILISEARCH_ADMIN_KEY is not provided:
 1. The master key will be used to fetch the admin key from Meilisearch
 2. The admin key will be saved to your .env file
 3. The environment will be prepared before database operations begin
+
+## Migrations
+
+`init-backend` runs `medusa db:migrate --execute-all-links` on every boot,
+from the directory it is started in. Up to 0.1.x it only migrated a database
+it was about to seed, so a deployed project that pulled a Medusa upgrade kept
+its old schema until someone migrated it by hand.
+
+- **Link changes are applied without asking.** A bare `medusa db:migrate`
+  waits for an interactive answer when an upgrade changes or removes a link
+  table, and a deploy has no terminal, so the boot would hang forever.
+  `--execute-all-links` applies the whole plan, including dropping the table of
+  a link that is no longer defined in code. Remove a link or a module only
+  when you mean to lose its link data.
+- **Worker mode skips it.** With `MEDUSA_WORKER_MODE=worker` nothing is
+  migrated or seeded, so only the server instance migrates.
+- The seed and the admin user still happen only once, on an empty database.
 
 ## Logging and secrets
 

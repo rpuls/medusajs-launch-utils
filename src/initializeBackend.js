@@ -95,14 +95,19 @@ const runCommand = (command, args = [], label = command) => {
   });
 };
 
-const seedDatabase = async () => {
+// Runs on every boot. --execute-all-links answers the link sync prompts that would otherwise hang a deploy forever.
+const migrateDatabase = async () => {
   try {
     console.log('Running migrations...');
-    await runCommand(NPX, ['medusa', 'db:migrate'], 'medusa db:migrate');
+    await runCommand(NPX, ['medusa', 'db:migrate', '--execute-all-links'], 'medusa db:migrate');
+  } catch (error) {
+    console.error('Failed to migrate database:', redact(error.message));
+    process.exit(1);
+  }
+};
 
-    console.log('Running link sync...');
-    await runCommand(NPX, ['medusa', 'db:sync-links'], 'medusa db:sync-links');
-
+const seedDatabase = async () => {
+  try {
     console.log('Running seed script...');
     await runCommand(NPM, ['run', 'seed'], 'npm run seed');
 
@@ -128,14 +133,18 @@ const seedDatabase = async () => {
   }
 };
 
-const seedOnce = async () => {
-  // Skip seeding if running in worker mode
+const initializeDatabase = async () => {
+  // A worker shares the server's database. Only the server migrates, so two
+  // processes never run the same migrations at once.
   if (process.env.MEDUSA_WORKER_MODE === 'worker') {
-    console.log('Running in worker mode, skipping database seeding.');
+    console.log('Running in worker mode, skipping migrations and seeding.');
     return;
   }
 
+  // Checked before migrating, because the first migration creates the table.
   const isSeeded = await checkIfSeeded();
+  await migrateDatabase();
+
   if (!isSeeded) {
     console.log('Database is not seeded. Seeding now...');
     await seedDatabase();
@@ -163,7 +172,8 @@ const reportDeploy = async () => {
 };
 
 module.exports = {
-  seedOnce,
+  initializeDatabase,
+  seedOnce: initializeDatabase, // Backwards compatibility
   reportDeploy,
   prepareEnvironment
 };
